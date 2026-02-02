@@ -48,7 +48,7 @@ async function sendTelegramMessage(chatId, message) {
 
 // ৪. মেইন ইভেন্ট প্রসেসর
 async function processEvent(data, docId, collectionName) {
-  // region এর সাথে reason যোগ করা হলো
+  // name, region, reason সব ভেরিয়েবল destructure করা হলো
   const { status, method, amount, trxId, requestId, notified, bankid, note, region, reason, name } = data;
 
   if (!status || !method) return;
@@ -78,35 +78,38 @@ async function processEvent(data, docId, collectionName) {
       const formattedBDT = bdtAmount.toFixed(2);
 
       if (status === 'approved') {
+        // ✅ DEPOSIT APPROVED (Name added)
         msg = `APPROVED 
 BankTransfer Agents
 Deposit Request № ${requestId || 'N/A'}
 Agent: ${method}
 Payment number: ${number}
 Amount: ${bdtAmount} BDT
-Customer: ${customId}
+Customer: ${customId} ${name || ''}
 Ext_trn_id: ${trxId || 'N/A'}`;
 
       } else if (status === 'pending') {
+        // ⏳ DEPOSIT PENDING (Name added)
         msg = `BankTransfer Agents
 Deposit Request № ${requestId || 'N/A'}
 Agent:  ${method} 
 Payment number: ${number}
 Amount: ${formattedBDT} BDT 
-Customer: ${customId}
+Customer: ${customId} (${name || 'N/A'})
 ChatId - ${chatId}
 id: ${bankid || 'N/A'}
 ext_trn_id: ${trxId || 'N/A'}
 ${note || ''}`;
 
       } else {
+        // ❌ DEPOSIT REJECTED (Name added)
         msg = `REJECTED
 BankTransfer Agents
 Deposit Request № ${requestId || 'N/A'}
 Agent: ${method}
 Payment number: ${number}
 Amount: ${formattedBDT} BDT 
-Customer: ${customId}
+Customer: ${customId} ${name || ''}
 BankTransferComment: ${region || 'N/A'}
 Ext_trn_id: ${trxId || 'N/A'}`;
       }
@@ -114,7 +117,7 @@ Ext_trn_id: ${trxId || 'N/A'}`;
     } else {
       // ==== উইথড্র সেকশন ====
       if (status === 'approved') {
-        // ✅ SENT (Approved) ফরম্যাট
+        // ✅ SENT (Approved)
         msg = `SENT
 BankTransfer Agents
 Withdrawal Request № ${requestId || 'N/A'}
@@ -125,7 +128,7 @@ Customer: ${customId} ${name || ''}
 BankTransferComment: ${trxId || 'N/A'}`;
 
       } else if (status === 'pending') {
-        // ⏳ PENDING ফরম্যাট
+        // ⏳ PENDING
         msg = `BankTransfer Agents
 Withdrawal Request № ${requestId || 'N/A'}
 Agent: ${method}
@@ -137,8 +140,7 @@ id: ${bankid || 'N/A'}
 ${note || 'Wallet Number'}: ${number}`;
 
       } else {
-        // ❌ REJECTED (CANCELED) ফরম্যাট [UPDATED]
-        // এখানে region এর বদলে reason ব্যবহার করা হয়েছে
+        // ❌ REJECTED (CANCELED)
         msg = `CANCELED
 BankTransfer Agents
 Withdrawal Request № ${requestId || 'N/A'}
